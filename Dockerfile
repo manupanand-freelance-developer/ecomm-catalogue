@@ -1,7 +1,7 @@
 FROM docker.io/redhat/ubi9-minimal:latest
 
 # Install necessary tools
-RUN microdnf install -y tar xz curl bash
+RUN microdnf install -y tar xz  bash
 
 # Install Node.js (v22.14.0)
 RUN cd /opt && \
