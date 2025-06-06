@@ -6,6 +6,7 @@ const bodyParser = require('body-parser');
 const express = require('express');
 const pino = require('pino');
 const expPino = require('express-pino-logger');
+require('dotenv').config();
 
 const logger = pino({
     level: 'info',
@@ -135,6 +136,7 @@ app.get('/search/:text', (req, res) => {
 // set up Mongo
 async function mongoConnect() {
     try {
+        logger.info(`Attempting to connect to MongoDB at ${process.env.MONGO_URL}`);
         const mongoURL = process.env.MONGO_URL || 'mongodb://mongodb:27017/catalogue';
         const client = await MongoClient.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true });
         db = client.db('catalogue');
@@ -143,15 +145,20 @@ async function mongoConnect() {
         logger.info('MongoDB connected');
     } catch (error) {
         mongoConnected = false;
-        logger.error('ERROR', error);
+       // 🔥 Print error message and stack explicitly
+        logger.error(`❌ MongoDB connection error: ${error.message}`);
+        logger.debug(error.stack); 
         setTimeout(mongoLoop, 2000);
     }
 }
 
 // mongodb connection retry loop
+
+
 function mongoLoop() {
-    mongoConnect().catch((e) => {
-        logger.error('ERROR', e);
+    mongoConnect().catch((error) => {
+        logger.error(`Unhandled error in mongoLoop: ${error.message}`);
+        logger.debug(error.stack);
         setTimeout(mongoLoop, 2000);
     });
 }
@@ -161,5 +168,5 @@ mongoLoop();
 // fire it up!
 const port = process.env.CATALOGUE_SERVER_PORT || '8080';
 app.listen(port, () => {
-    logger.info('Started on port', port);
+    logger.info('Catalogue service started on port', port);
 });
